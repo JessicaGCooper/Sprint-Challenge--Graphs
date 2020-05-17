@@ -27,7 +27,8 @@ world.print_rooms()
 
 player = Player(world.starting_room)
 
-###BEGIN MY CODE###
+"""BEGIN MY CODE"""
+
 #initialize rooms_visited set which contains no duplicates but will make sure all rooms are visited
 rooms_visited = set()
 #initialize rooms_visited_inorder which allows to see full path and debug by seeing if unnecessary paths are taken
@@ -171,7 +172,7 @@ print(f'rooms_visited: {rooms_visited}')
 print(f'length of traversal path: {len(traversal_path)}')
 print(f'room player is in when traversal ends: {player.current_room.id}')
 
-###END MY CODE###
+"""END MY CODE"""
 
 
 # TRAVERSAL TEST - DO NOT MODIFY
