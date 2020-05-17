@@ -122,28 +122,32 @@ def bfs_backtrack_shortest_path():
                     q.enqueue(copy)
     return short_path
 
+##initialize population of graph by calling growing_graph function
+growing_graph(graph)
 ##call backtrack function and return it's the resulting array as 'backtrack'
 backtrack = bfs_backtrack_shortest_path()
-##convert backtrack into directions
-directions = []
-for i in range(0, len(backtrack)-1):
-    ##options will be the possible exits dictionary for the room_id in backtrack
-    options = graph[backtrack[i]]
-    print(options)
-    ##key is direction, value is room number
-    ##if the room number in the possible exits/options dictionary is equal to next room number in the backtrack array we know this is the way we went, then to convert to directions we take key/direction and append to directions array
-    for key, value in options.items():
-        if value == backtrack[i+1]:
-            directions.append(key)
-for move in directions:
-    ##while building the directions array to add to traversal list we will also move the player this way so that the current room id will be current when the growing_graph function is called
-    player.travel(move)
-    ###rooms_visited_inorder is used to debug since I can tell if routes are taken when they should not be
-    rooms_visited_inorder.append(player.current_room.id)
+##create function to convert backtrack into directions
+def convert_backtrack(backtrack):
+    directions = []
+    for i in range(0, len(backtrack)-1):
+        ##options will be the possible exits dictionary for the room_id in backtrack
+        options = graph[backtrack[i]]
+        ##key is direction, value is room number
+        ##if the room number in the possible exits/options dictionary is equal to next room number in the backtrack array we know this is the way we went, then to convert to directions we take key/direction and append to directions array
+        for key, value in options.items():
+            if value == backtrack[i+1]:
+                directions.append(key)
+    for move in directions:
+        ##while building the directions array to add to traversal list we will also move the player this way so that the current room id will be current when the growing_graph function is called
+        player.travel(move)
+        ###rooms_visited_inorder is used to debug since I can tell if routes are taken when they should not be
+        rooms_visited_inorder.append(player.current_room.id)
 
-##after completing the directions array as a result of the backtrack we add those directions to the traversal_path
-traversal_path.extend(directions)
-## now we call growing_graph again for the next DFT until it hits a deadend
+    ##after completing the directions array as a result of the backtrack we add those directions to the traversal_path
+    traversal_path.extend(directions)
+
+
+## now we call growing_graph again for the next DFT until it hits a deadend, also we call it this second time outside the loop so I can have it be the last function called in the below while loop to decrease traversal moves
 growing_graph(graph)
 
 ##Now we will loop through all of the above described continuously until the the length of the rooms_visited set is equal to the number of rooms in the map
@@ -151,24 +155,12 @@ while len(rooms_visited) < 500:
     ##call bft_backtrack function (note the graph has already been initiliazed and the function for that DFT run twice before this loop is even begun)
     backtrack = bfs_backtrack_shortest_path()
     ##convert backtrack into directions
-    directions = []
-    for i in range(0, len(backtrack)-1):
-        ##options will be the possible exits dictionary for the room_id in backtrack
-        options = graph[backtrack[i]]
-        ##key is direction, value is room number
-        for key, value in options.items():
-            if value == backtrack[i+1]:
-                directions.append(key)
-    ##player moves through backtrack path
-    for move in directions:
-        player.travel(move)
-        rooms_visited_inorder.append(player.current_room.id)
-    traversal_path.extend(directions)
+    convert_backtrack(backtrack)
     ##growing_graph called again now that a room with '?' still in it has been found by backtrack function
     growing_graph(graph)
 
 print('FINAL RESULTS:')
-print(f'rooms_visited: {rooms_visited}')
+print(f'number of rooms_visited: {len(rooms_visited)}')
 print(f'length of traversal path: {len(traversal_path)}')
 print(f'room player is in when traversal ends: {player.current_room.id}')
 
