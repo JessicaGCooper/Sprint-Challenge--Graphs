@@ -27,7 +27,7 @@ world.print_rooms()
 
 player = Player(world.starting_room)
 
-rooms_visited_inorder = []
+rooms_visited_inorder = [0]
 rooms_visited = set()
 
 traversal_path = []
@@ -49,9 +49,6 @@ def growing_graph(graph):
             direction = random.choice(list(graph[player.current_room.id]))
         if graph[player.current_room.id][direction] == '?':
             player.travel(direction)
-            traversal_path.append(direction)
-            rooms_visited_inorder.append(player.current_room.id)
-            rooms_visited.add(player.current_room.id)
             graph[prior_key][direction] = player.current_room.id
             if direction == 'n':
                 inverse = 's'
@@ -61,8 +58,13 @@ def growing_graph(graph):
                 inverse = 'w'
             elif direction == 'w':
                 inverse = 'e'
-            for each in player.current_room.get_exits():
-                graph[player.current_room.id].update( {each: '?'})
+            ##So as not to reset any visited room the below if statement is in place
+            if player.current_room.id not in rooms_visited:
+                for each in player.current_room.get_exits():
+                    graph[player.current_room.id].update( {each: '?'})
+            traversal_path.append(direction)
+            rooms_visited_inorder.append(player.current_room.id)
+            rooms_visited.add(player.current_room.id)
             graph[player.current_room.id][inverse] = prior_key
     return graph
 
@@ -71,7 +73,8 @@ print(traversal_path)
 # print(rooms_visited)
 # print(rooms_visited_inorder)
 print(player.current_room.id)
-
+print("Rooms visited after graph traversal:")
+print(rooms_visited_inorder)
 ##function is looping through and populating an adjacency graph as it does so, per this model:
 ##Start by writing an algorithm that picks a random unexplored direction from the player's current room, travels and logs that direction, then loops. This should cause your player to walk a depth-first traversal. When you reach a dead-end (i.e. a room with no unexplored paths)
 
@@ -102,7 +105,7 @@ def bfs_backtrack_shortest_path():
             
             curr_possible_exits = graph[r[-1]]
             for direction, room_id in curr_possible_exits.items():
-                if len(curr_possible_exits) > 1:
+                if len(r) > 1:
                     if room_id != r[-2]:
                         copy = r.copy()
                         # append room_id to copy
@@ -128,12 +131,12 @@ for i in range(0, len(backtrack)-1):
             directions.append(key)
 for move in directions:
     player.travel(move)
-print(directions)
-print (player.current_room.id)
+    rooms_visited_inorder.append(player.current_room.id)
 
 traversal_path.extend(directions)
 
 growing_graph(graph)
+
 
 while len(rooms_visited) < 500:
 
@@ -149,9 +152,13 @@ while len(rooms_visited) < 500:
                 directions.append(key)
     for move in directions:
         player.travel(move)
-
+        rooms_visited_inorder.append(player.current_room.id)
+    # print("Rooms visited after adding backtrack:")
+    # print(rooms_visited_inorder)
     traversal_path.extend(directions)
     growing_graph(graph)
+    # print("Rooms visited after graph traversal:")
+    # print(rooms_visited_inorder)
 
 
 print('Final:')
