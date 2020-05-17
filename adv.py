@@ -29,14 +29,19 @@ player = Player(world.starting_room)
 
 rooms_visited_inorder = []
 rooms_visited = set()
+
 traversal_path = []
 graph = {}
-for i in range(0, 19):
+for i in range(0, 500):
     graph[i] = {}
 
 def growing_graph(graph):
-    for each in player.current_room.get_exits():
-        graph[player.current_room.id].update( {each: '?'})
+    ##So as not to reset any visite room the below if statement is in place
+    if player.current_room.id not in rooms_visited:
+        rooms_visited.add(player.current_room.id)
+        for each in player.current_room.get_exits():
+            graph[player.current_room.id].update( {each: '?'})
+    ##until I get to a dead end with no ? this loop will continue then I have to backtrack via the bfs
     while '?' in graph[player.current_room.id].values():    
         prior_key = player.current_room.id
         direction = random.choice(list(graph[player.current_room.id]))
@@ -74,64 +79,85 @@ print(player.current_room.id)
 ##what should be stored in Queue? I believe it will have to be the room_ids
 ##How to keep track of all paths? I think we can make an array of directions traversed.
 ##Do I need to keep track of room no? No, player.current_room.id will.
+
 def bfs_backtrack_shortest_path():
     q = Queue()
-    possible_exits = graph[player.current_room.id]
-    for direction, room_id in possible_exits.items():
-        q.enqueue([(room_id, direction)])
+    
+    q.enqueue([player.current_room.id])
 
-    back_track_visited = set()
-    back_track_paths = []
+    # short_path = []
+
     ##while loop needs to loop until: '?' in graph[player.current_room.id].values()
     # while '?' not in graph[player.current_room.id].values():
-    if q.size() > 0:
+    while q.size() > 0:
+        ##r is an array of room ids, we want to examine the last room id added
         r = q.dequeue()
-        ##check if room_id in last element of r in back_track_visited, if not add to visited ()
-        if r[-1][0] not in back_track_visited:
-            back_track_visited.add(r[-1])
 
-        ##if '?' present append path to back_track_paths and move on to next item in queue, else append all possible directions:
-        if '?' not in graph[player.current_room.id].values():
-            back_track_paths.append(r)
-            print(f'back_track_paths: {back_track_paths}')
-        ##we should be going back through already visited rooms so the directions should be populated alread, use the room_id as key to get direction: room dictionary
-        curr_possible_exits = graph[player.current_room.id]
-        for direction, room_id in curr_possible_exits.items():
-            ##travel in direction only if room not already backtracked to
-            for each in back_track_visited:
-                if room_id != each[0]:
-                    ##create copy of path of room ids represented by r
+        ##if '?' present in directions available to new current room this is first path we have found and will be one of the shortest due to this being a bfs, so we just want to break the while loop and return this path:
+        if '?' in graph[r[-1]].values():
+            # r.append[player.current_room.id]
+            short_path = r
+            break
+        else:
+            
+            curr_possible_exits = graph[r[-1]]
+            for direction, room_id in curr_possible_exits.items():
+                if len(curr_possible_exits) > 1:
+                    if room_id != r[-2]:
+                        copy = r.copy()
+                        # append room_id to copy
+                        copy.append(room_id)
+                        q.enqueue(copy)
+                else:
                     copy = r.copy()
-                    player.travel(direction)
-                    ##append room_id, direction tuple to copy
-                    copy.append((room_id, direction))
-    ##find the shortest backtrack       
-    shortest_path = back_track_paths[0]
-    for path in back_track_paths:
-        if len(path) < len(shortest_path):
-            shortest_path = path
-    return shortest_path
+                    # append room_id to copy
+                    copy.append(room_id)
+                    q.enqueue(copy)
+    return short_path
 
 backtrack = bfs_backtrack_shortest_path()
-##append new direction to overall traversal list
-for each in backtrack:
-    traversal_path.append(each[1])
-print('updated traversal:')
-print(traversal_path)
-print(player.current_room.id)
-while len(rooms_visited) < 19:
-    growing_graph(graph)
-    bfs_backtrack_shortest_path()
+##convert backtrack into directions
+directions = []
+for i in range(0, len(backtrack)-1):
+    ##options will be the possible exits dictionary for the room_id in backtrack
+    options = graph[backtrack[i]]
+    print(options)
+    ##key is direction, value is room number
+    for key, value in options.items():
+        if value == backtrack[i+1]:
+            directions.append(key)
+for move in directions:
+    player.travel(move)
+print(directions)
+print (player.current_room.id)
+
+traversal_path.extend(directions)
+
+growing_graph(graph)
+
+while len(rooms_visited) < 500:
+
     backtrack = bfs_backtrack_shortest_path()
-    ##append new direction to overall traversal list
-    for each in backtrack:
-        traversal_path.append(each[1])
-    print('updated traversal:')
-    print(traversal_path)
-    print(player.current_room.id)
+    ##convert backtrack into directions
+    directions = []
+    for i in range(0, len(backtrack)-1):
+        ##options will be the possible exits dictionary for the room_id in backtrack
+        options = graph[backtrack[i]]
+        ##key is direction, value is room number
+        for key, value in options.items():
+            if value == backtrack[i+1]:
+                directions.append(key)
+    for move in directions:
+        player.travel(move)
+
+    traversal_path.extend(directions)
+    growing_graph(graph)
+
+
 print('Final:')
 print(rooms_visited)
-print(traversal_path)
+print(len(traversal_path))
+print(player.current_room.id)
 
 
 ##Then take the room_id it finds(which will be player.current_room.id so no need to store it) as the starting point to go through the DFT function above
@@ -144,19 +170,19 @@ print(traversal_path)
 
 
 # TRAVERSAL TEST - DO NOT MODIFY
-# visited_rooms = set()
-# player.current_room = world.starting_room
-# visited_rooms.add(player.current_room)
+visited_rooms = set()
+player.current_room = world.starting_room
+visited_rooms.add(player.current_room)
 
-# for move in traversal_path:
-#     player.travel(move)
-#     visited_rooms.add(player.current_room)
+for move in traversal_path:
+    player.travel(move)
+    visited_rooms.add(player.current_room)
 
-# if len(visited_rooms) == len(room_graph):
-#     print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
-# else:
-#     print("TESTS FAILED: INCOMPLETE TRAVERSAL")
-#     print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
+if len(visited_rooms) == len(room_graph):
+    print(f"TESTS PASSED: {len(traversal_path)} moves, {len(visited_rooms)} rooms visited")
+else:
+    print("TESTS FAILED: INCOMPLETE TRAVERSAL")
+    print(f"{len(room_graph) - len(visited_rooms)} unvisited rooms")
 
 
 
